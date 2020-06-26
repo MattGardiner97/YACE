@@ -43,7 +43,7 @@ namespace YACE
                 byte currentByte = _memory.ReadByte(IAddress);
                 for(int x = 0; x < 8; x++)
                 {
-                    byte currentBit = (byte)((currentByte & (1 << x)) >> x);
+                    byte currentBit = (byte)((currentByte >> (7-x)) & 1);
                     if(currentBit == 1)
                     {
                         if (StartX + x >= FRAME_WIDTH || StartY + y >= FRAME_HEIGHT)

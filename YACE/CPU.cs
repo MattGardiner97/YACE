@@ -23,7 +23,7 @@ namespace YACE
         private DateTime _delayTimerLastTick;
         private DateTime _soundTimerLastTick;
 
-        private bool _waitingForInput = false;
+        public bool WaitingForInput { get; set; } = false;
         private byte _waitingForInputTargetRegister;
 
         public CPU(Memory Memory, Graphics Graphics, Input Input)
@@ -62,7 +62,7 @@ namespace YACE
 
             }
 
-            if (_waitingForInput == false)
+            if (WaitingForInput == false)
             {
                 _opcode = Fetch();
                 Func<ushort> func = Decode(_opcode);
@@ -221,10 +221,10 @@ namespace YACE
         //Event handlers
         private void KeyPressEventHandler(byte Keycode)
         {
-            if (_waitingForInput == true)
+            if (WaitingForInput == true)
             {
                 Registers[_waitingForInputTargetRegister] = Keycode;
-                _waitingForInput = false;
+                WaitingForInput = false;
             }
         }
 
@@ -476,7 +476,7 @@ namespace YACE
         private ushort AwaitKeyPress()
         {
             byte regID = Helpers.ReadNibble(_opcode, 2);
-            _waitingForInput = true;
+            WaitingForInput = true;
             _waitingForInputTargetRegister = regID;
             return 2;
         }
