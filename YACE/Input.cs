@@ -12,7 +12,7 @@ namespace YACE
 
         public Input()
         {
-            _keysPressed = new bool[0xF];
+            _keysPressed = new bool[16];
         }
 
         public bool GetKeyState(byte Keycode)
@@ -22,9 +22,11 @@ namespace YACE
 
         public void SetKeyState(byte Keycode, bool State)
         {
-            if(State == true)
+            if (Keycode > 0xF)
+                return;
+            if (State == true)
             {
-                KeyPressed?.DynamicInvoke(new object[] { Keycode });
+                KeyPressed?.Invoke(Keycode);
             }
             _keysPressed[Keycode] = State;
         }

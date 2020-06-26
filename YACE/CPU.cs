@@ -26,6 +26,8 @@ namespace YACE
         public bool WaitingForInput { get; set; } = false;
         private byte _waitingForInputTargetRegister;
 
+        public event Action KeypressUnblocked;
+
         public CPU(Memory Memory, Graphics Graphics, Input Input)
         {
             _memory = Memory;
@@ -225,6 +227,8 @@ namespace YACE
             {
                 Registers[_waitingForInputTargetRegister] = Keycode;
                 WaitingForInput = false;
+                PC += 2;
+                KeypressUnblocked?.Invoke();
             }
         }
 
@@ -478,7 +482,7 @@ namespace YACE
             byte regID = Helpers.ReadNibble(_opcode, 2);
             WaitingForInput = true;
             _waitingForInputTargetRegister = regID;
-            return 2;
+            return 0;
         }
 
         private ushort SetDelayTimer()
