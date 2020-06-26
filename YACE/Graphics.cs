@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace YACE
@@ -10,6 +11,8 @@ namespace YACE
         private const int FRAME_HEIGHT = 32;
 
         public byte[,] FrameBuffer { get; private set; }
+
+        public event Action ScreenRefresh;
 
         private Memory _memory;
 
@@ -29,6 +32,7 @@ namespace YACE
                     FrameBuffer[x, y] = 0;
                 }
             }
+            ScreenRefresh?.Invoke();
         }
 
         public bool DrawSprite(byte StartX, byte StartY, byte Height, ushort IAddress)
@@ -57,6 +61,8 @@ namespace YACE
                 }
                 IAddress++;
             }
+
+            ScreenRefresh?.Invoke();
 
             return returnValue;
         }

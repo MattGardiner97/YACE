@@ -16,11 +16,12 @@ namespace YACE
         public byte[] Registers { get; private set; }
         public ushort RegisterI { get; set; }
         public byte DelayTimer { get; set; }
+        public byte SoundTimer { get; set; }
 
         private ushort _opcode;
-        private byte _soundTimer;
 
         private DateTime _delayTimerLastTick;
+        private DateTime _soundTimerLastTick;
 
         private bool _waitingForInput = false;
         private byte _waitingForInputTargetRegister;
@@ -34,24 +35,41 @@ namespace YACE
             _random = new Random();
 
             _delayTimerLastTick = new DateTime(0);
+            _soundTimerLastTick = new DateTime(0);
 
-            PC = _memory.FontDataBaseAddress;
+            PC = _memory.ROMBaseAddress;
             Registers = new byte[16];
         }
 
         public void Tick()
         {
+            if (DelayTimer != 0 && (DateTime.Now - _delayTimerLastTick).TotalMilliseconds >= 1 / 60)
+            {
+                DelayTimer--;
+                _delayTimerLastTick = DateTime.Now;
+            }
+            if (SoundTimer != 0)
+            {
+                throw new NotImplementedException("Beep");
+                if ((DateTime.Now - _soundTimerLastTick).TotalMilliseconds >= 1 / 60)
+                {
+                    SoundTimer--;
+                    _soundTimerLastTick = DateTime.Now;
+                }
+            }
+            else if(SoundTimer == 0)
+            {
+
+            }
+
             if (_waitingForInput == false)
             {
                 _opcode = Fetch();
                 Func<ushort> func = Decode(_opcode);
                 Execute(func);
             }
-            if (DelayTimer != 0 && (DateTime.Now - _delayTimerLastTick).TotalMilliseconds >= 1 / 60)
-            {
-                DelayTimer--;
-                _delayTimerLastTick = DateTime.Now;
-            }
+
+            
         }
 
         private ushort Fetch()
@@ -473,7 +491,7 @@ namespace YACE
         private ushort SetSoundTimer()
         {
             byte regID = Helpers.ReadNibble(_opcode, 2);
-            _soundTimer = Registers[regID];
+            SoundTimer = Registers[regID];
             return 2;
         }
 
@@ -508,7 +526,7 @@ namespace YACE
             _memory.WriteByte(RegisterI, hundreds);
             _memory.WriteByte(RegisterI + 1, tens);
             _memory.WriteByte(RegisterI + 2, ones);
-            throw new NotImplementedException();
+            return 2;
         }
         private ushort RegisterDump()
         {

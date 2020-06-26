@@ -9,6 +9,8 @@ namespace YACE
         public Input Input { get; private set; }
         public CPU CPU { get; private set; }
 
+        public event Action Ticked;
+
         public Emulator()
         {
             Memory = new Memory();
@@ -20,6 +22,7 @@ namespace YACE
         public void Tick()
         {
             CPU.Tick();
+            this?.Ticked.Invoke();
         }
 
     }

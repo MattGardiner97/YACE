@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Runtime.CompilerServices;
 using YACE;
 
 namespace YACE_Tests
@@ -322,9 +323,9 @@ namespace YACE_Tests
             Assert.AreEqual(1, _emu.CPU.Registers[0xF]);
 
             //Check with carry flag
-             regID1 = GetRandomRegister();
+            regID1 = GetRandomRegister();
             regID2 = GetRandomRegister(regID1);
-             value1 = (byte)_random.Next(0, 100);
+            value1 = (byte)_random.Next(0, 100);
             value2 = (byte)_random.Next(100, 200);
             _emu.CPU.Registers[regID1] = value1;
             _emu.CPU.Registers[regID2] = value2;
@@ -505,15 +506,178 @@ namespace YACE_Tests
             {
                 //The current 8-pixel byte
                 byte currentByte = spriteBytes[y];
-                for(int x = 0; x < 8; x++)
+                for (int x = 0; x < 8; x++)
                 {
                     //Reads the current bit
                     byte expectedValue = (byte)((currentByte & (1 << x)) >> x);
                     //Verify the expexted bit is stored in the frame buffer
-                    Assert.AreEqual(expectedValue, frameBuffer[xVal + x,yVal +  y]);
+                    Assert.AreEqual(expectedValue, frameBuffer[xVal + x, yVal + y]);
                 }
             }
 
+        }
+
+        [TestMethod]
+        public void SkipNextIfKeyPressed_Test()
+        {
+            //Key is pressed
+            byte regID = GetRandomRegister();
+            byte expectedKey = (byte)_random.Next(0, 0x10);
+            _emu.CPU.Registers[regID] = expectedKey;
+            _emu.Input.SetKeyState(expectedKey, true);
+            ushort opcode = GetOpcodeWithXRegister(0xE000, regID, 0x9E);
+            SetNextInstruction(opcode);
+            ushort oldPC = _emu.CPU.PC;
+            _emu.Tick();
+            Assert.AreEqual(oldPC + 4, _emu.CPU.PC);
+
+            //Key is not pressed
+            regID = GetRandomRegister();
+            expectedKey = (byte)_random.Next(0, 0x10);
+            _emu.CPU.Registers[regID] = expectedKey;
+            _emu.Input.SetKeyState(expectedKey, false);
+            opcode = GetOpcodeWithXRegister(0xE000, regID, 0x9E);
+            SetNextInstruction(opcode);
+            oldPC = _emu.CPU.PC;
+            _emu.Tick();
+            Assert.AreEqual(oldPC + 2, _emu.CPU.PC);
+        }
+
+        [TestMethod]
+        public void SkipNextIfKeyNotPressed_Test()
+        {
+            //Key is pressed
+            byte regID = GetRandomRegister();
+            byte expectedKey = (byte)_random.Next(0, 0x10);
+            _emu.CPU.Registers[regID] = expectedKey;
+            _emu.Input.SetKeyState(expectedKey, true);
+            ushort opcode = GetOpcodeWithXRegister(0xE000, regID, 0xA1);
+            SetNextInstruction(opcode);
+            ushort oldPC = _emu.CPU.PC;
+            _emu.Tick();
+            Assert.AreEqual(oldPC + 2, _emu.CPU.PC);
+
+            //Key is not pressed
+            regID = GetRandomRegister();
+            expectedKey = (byte)_random.Next(0, 0x10);
+            _emu.CPU.Registers[regID] = expectedKey;
+            _emu.Input.SetKeyState(expectedKey, false);
+            opcode = GetOpcodeWithXRegister(0xE000, regID, 0xA1);
+            SetNextInstruction(opcode);
+            oldPC = _emu.CPU.PC;
+            _emu.Tick();
+            Assert.AreEqual(oldPC + 4, _emu.CPU.PC);
+        }
+
+        [TestMethod]
+        public void SetRegisterToDelayTimer_Test()
+        {
+            byte regID = GetRandomRegister();
+            _emu.CPU.DelayTimer = 100;
+            ushort opcode = GetOpcodeWithXRegister(0xF000, regID, 0x07);
+            SetNextInstruction(opcode);
+            _emu.Tick();
+            Assert.AreEqual(_emu.CPU.DelayTimer, _emu.CPU.Registers[regID]);
+        }
+
+        [TestMethod]
+        public void SetDelayTimerToRegister_Test()
+        {
+            byte regID = GetRandomRegister();
+            _emu.CPU.Registers[regID] = (byte)_random.Next(0, 0x100);
+            ushort opcode = GetOpcodeWithXRegister(0xF000, regID, 0x15);
+            SetNextInstruction(opcode);
+            _emu.Tick();
+            Assert.AreEqual(_emu.CPU.Registers[regID], _emu.CPU.DelayTimer);
+        }
+
+        [TestMethod]
+        public void SetSoundTimerToRegister_Test()
+        {
+            byte regID = GetRandomRegister();
+            _emu.CPU.Registers[regID] = (byte)_random.Next(0, 0x100);
+            ushort opcode = GetOpcodeWithXRegister(0xF000, regID, 0x18);
+            SetNextInstruction(opcode);
+            _emu.Tick();
+            Assert.AreEqual(_emu.CPU.Registers[regID], _emu.CPU.SoundTimer);
+        }
+
+        [TestMethod]
+        public void AddRegisterToI_Test()
+        {
+            byte regID = GetRandomRegister();
+            byte randomValue = (byte)_random.Next(0, 0x100);
+            ushort randomAddress = (ushort)_random.Next(0, 0x1000);
+            _emu.CPU.Registers[regID] = randomValue;
+            _emu.CPU.RegisterI = randomAddress;
+            ushort expectedResult = (ushort)(randomAddress + randomValue);
+            ushort opcode = GetOpcodeWithXRegister(0xF000, regID, 0x1E);
+            SetNextInstruction(opcode);
+            _emu.Tick();
+            Assert.AreEqual(expectedResult, _emu.CPU.RegisterI);
+        }
+
+        [TestMethod]
+        public void SetIToSpriteLocation_Test()
+        {
+            byte randomCharacter = GetRandomRegister();
+            byte regID = GetRandomRegister();
+            _emu.CPU.Registers[regID] = randomCharacter;
+            ushort opcode = GetOpcodeWithXRegister(0xF000, regID, 0x29);
+            SetNextInstruction(opcode);
+            _emu.Tick();
+            ushort expectedAddress = (ushort)(_emu.Memory.FontDataBaseAddress + (randomCharacter * 5));
+            Assert.AreEqual(expectedAddress, _emu.CPU.RegisterI);
+        }
+
+        [TestMethod]
+        public void StoreBinbaryCodedDecimal_Test()
+        {
+            byte regID = GetRandomRegister();
+            byte value = (byte)_random.Next(0, 0x100);
+            byte hundreds = (byte)(value / 100);
+            byte tens = (byte)((value % 100) / 10);
+            byte ones = (byte)(value % 10);
+            _emu.CPU.Registers[regID] = value;
+            ushort opcode = GetOpcodeWithXRegister(0xF000, regID, 0x33);
+            SetNextInstruction(opcode);
+            _emu.CPU.RegisterI = 0x500;
+            _emu.Tick();
+            Assert.AreEqual(hundreds, _emu.Memory.ReadByte(_emu.CPU.RegisterI));
+            Assert.AreEqual(tens, _emu.Memory.ReadByte(_emu.CPU.RegisterI + 1));
+            Assert.AreEqual(ones, _emu.Memory.ReadByte(_emu.CPU.RegisterI + 2));
+        }
+
+        [TestMethod]
+        public void RegisterDump_Test()
+        {
+            byte maxRegister = GetRandomRegister();
+            for (int i = 0; i <= maxRegister; i++)
+                _emu.CPU.Registers[i] = (byte)_random.Next(0, 0x100);
+
+            ushort opcode = GetOpcodeWithXRegister(0xF000, maxRegister, 0x55);
+            SetNextInstruction(opcode);
+            _emu.CPU.RegisterI = 0x500;
+            _emu.Tick();
+
+            for (int i = 0; i <= maxRegister; i++)
+                Assert.AreEqual(_emu.CPU.Registers[i], _emu.Memory.ReadByte(_emu.CPU.RegisterI + i));
+        }
+
+        [TestMethod]
+        public void RegisterLoad_Test()
+        {
+            byte maxRegister = GetRandomRegister();
+            _emu.CPU.RegisterI = 0x500;
+            byte[] randomBytes = new byte[maxRegister + 1];
+            _random.NextBytes(randomBytes);
+            Array.Copy(randomBytes, 0, _emu.Memory.RAM, _emu.CPU.RegisterI, randomBytes.Length);
+            ushort opcode = GetOpcodeWithXRegister(0xF000, maxRegister, 0x65);
+            SetNextInstruction(opcode);
+            _emu.Tick();
+
+            for (int i = 0; i < maxRegister; i++)
+                Assert.AreEqual(randomBytes[i], _emu.CPU.Registers[i]);
         }
     }
 }
