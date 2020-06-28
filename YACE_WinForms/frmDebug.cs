@@ -18,11 +18,14 @@ namespace YACE_WinForms
         private RegisterTextbox[] txtRegisters;
         private TextBox txtRegisterI;
         private Button btnStep;
+        private Button btnPauseResume;
 
         public frmDebug(Emulator Emulator)
         {
             _emulator = Emulator;
             _emulator.Ticked += EmulatorTicked;
+            _emulator.Paused += () => { UpdateDebugInfo(); btnStep.Enabled = true; };
+            _emulator.CPU.ValueChanged += () => { UpdateDebugInfo(); };
 
             InitializeComponent();
 
@@ -79,13 +82,26 @@ namespace YACE_WinForms
             //Step button
             btnStep = new Button()
             {
-                Text = "Step"
+                Text = "Step",
+                Enabled = false
             };
             btnStep.Click += (_, __) => { _emulator.Tick(); };
+
+            btnPauseResume = new Button()
+            {
+                Text = "Pause"
+            };
+            btnPauseResume.Click += (_, ___) =>
+            {
+                btnPauseResume.Text = !_emulator.IsPaused ? "Resume" : "Pause";
+                btnStep.Enabled = !_emulator.IsPaused;
+                _emulator.IsPaused = !_emulator.IsPaused;
+            };
 
             mainPanel.Controls.Add(txtPC);
             mainPanel.Controls.Add(registerFlowPanel);
             mainPanel.Controls.Add(btnStep);
+            mainPanel.Controls.Add(btnPauseResume);
 
 
             this.AutoSize = true;

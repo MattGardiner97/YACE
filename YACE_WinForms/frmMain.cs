@@ -39,11 +39,15 @@ namespace YACE_WinForms
             byte[] rom = File.ReadAllBytes("C:/Users/Matt/Desktop/CONNECT4");
             _emulator.Memory.LoadROM(rom);
             _emulator.Graphics.ScreenRefresh += Graphics_ScreenRefresh;
-            _emulator.Resumed += RunLoop;
+
             _emulator.Paused += () =>
             {
-                _frmDebug.UpdateDebugInfo();
-                _frmAssembly.UpdateDisassembly();
+                this.Text = $"YACE - Paused";
+            };
+            _emulator.Resumed += () =>
+            {
+                this.Text = "YACE";
+                RunLoop();
             };
 
             _disassembler = new Disassembler(_emulator.Memory.ROMBaseAddress);
@@ -93,9 +97,10 @@ namespace YACE_WinForms
             UpdateScreenBitmap();
         }
 
+        //User functions
         private void RunLoop()
         {
-            while (Paused == false)
+            while (_emulator.IsPaused == false)
             {
                 _emulator.Tick();
 
@@ -106,7 +111,6 @@ namespace YACE_WinForms
             }
         }
 
-        //User functions
         private void UpdateFormDebug()
         {
             _frmDebug.Left = this.Right;
@@ -152,7 +156,7 @@ namespace YACE_WinForms
 
             //Create other forms
             _frmDebug = new frmDebug(_emulator);
-            _frmAssembly = new frmAssembly(_disassembler);
+            _frmAssembly = new frmAssembly(_emulator);
 
             //Main menu strip
             menuMain = CreateMenuStrip();
