@@ -60,15 +60,62 @@ namespace YACE_WinForms
 
             this.Shown += FrmMain_Shown;
             this.Move += FrmMain_Move;
-            this.KeyPress += FrmMain_KeyPress;
+            this.KeyDown += FrmMain_KeyDown; 
+            this.KeyUp += FrmMain_KeyUp;
         }
 
-        private void FrmMain_KeyPress(object sender, KeyPressEventArgs e)
+        private byte GetKeyFromKeyCode(Keys KeyCode)
         {
-            char c = e.KeyChar;
-            byte result = 0;
-            if (byte.TryParse(c.ToString(), System.Globalization.NumberStyles.HexNumber, null, out result))
-                _emulator.Input.SetKeyState(result, true);
+            switch (KeyCode)
+            {
+                case Keys.NumPad0:
+                    return 0;
+                case Keys.NumPad1:
+                    return 1;
+                case Keys.NumPad2:
+                    return 2;
+                case Keys.NumPad3:
+                    return 3;
+                case Keys.NumPad4:
+                    return 4;
+                case Keys.NumPad5:
+                    return 5;
+                case Keys.NumPad6:
+                    return 6;
+                case Keys.NumPad7:
+                    return 7;
+                case Keys.NumPad8:
+                    return 8;
+                case Keys.NumPad9:
+                    return 9;
+                case Keys.A:
+                    return 0xA;
+                case Keys.B:
+                    return 0xB;
+                case Keys.C:
+                    return 0xC;
+                case Keys.D:
+                    return 0xD;
+                case Keys.E:
+                    return 0xE;
+                case Keys.F:
+                    return 0xF;
+            }
+            return byte.MaxValue;
+        }
+
+        private void FrmMain_KeyUp(object sender, KeyEventArgs e)
+        {
+            byte key = GetKeyFromKeyCode(e.KeyCode);
+            if (key <= 0xF) 
+            _emulator.Input.SetKeyState(key, false);
+        }
+
+        private void FrmMain_KeyDown(object sender, KeyEventArgs e)
+        {
+            byte key = GetKeyFromKeyCode(e.KeyCode);
+            if(key <= 0xF)
+            _emulator.Input.SetKeyState(key, true);
         }
 
         //Events
