@@ -36,8 +36,6 @@ namespace YACE_WinForms
             InitializeComponent();
 
             _emulator = new Emulator();
-            byte[] rom = File.ReadAllBytes("C:/Users/Matt/Desktop/CONNECT4");
-            _emulator.Memory.LoadROM(rom);
             _emulator.Graphics.ScreenRefresh += Graphics_ScreenRefresh;
 
             _emulator.Paused += () =>
@@ -51,8 +49,7 @@ namespace YACE_WinForms
             };
 
             _disassembler = new Disassembler(_emulator.Memory.ROMBaseAddress);
-            _disassembler.LoadROM(rom);
-            _disassembler.Disassemble();
+            
 
             CreateComponents();
 
@@ -62,6 +59,62 @@ namespace YACE_WinForms
             this.Move += FrmMain_Move;
             this.KeyDown += FrmMain_KeyDown; 
             this.KeyUp += FrmMain_KeyUp;
+        }
+
+        
+
+        //Events
+        private void FrmMain_KeyUp(object sender, KeyEventArgs e)
+        {
+            byte key = GetKeyFromKeyCode(e.KeyCode);
+            if (key <= 0xF) 
+            _emulator.Input.SetKeyState(key, false);
+        }
+
+        private void FrmMain_KeyDown(object sender, KeyEventArgs e)
+        {
+            byte key = GetKeyFromKeyCode(e.KeyCode);
+            if(key <= 0xF)
+            _emulator.Input.SetKeyState(key, true);
+        }
+
+        private void FrmMain_Move(object sender, EventArgs e)
+        {
+            UpdateFormDebug();
+            UpdateFormAssembly();
+        }
+
+        private void FrmMain_Shown(object sender, EventArgs e)
+        {
+            _frmDebug.Show();
+            UpdateFormDebug();
+
+            _frmAssembly.Show();
+            UpdateFormAssembly();
+
+            RunLoop();
+        }
+
+        private void Graphics_ScreenRefresh()
+        {
+            for (int y = 0; y < 32; y++)
+                for (int x = 0; x < 64; x++)
+                    internalBitmap.SetPixel(x, y, _emulator.Graphics.FrameBuffer[x, y] == 0 ? Color.Black : Color.Blue);
+            UpdateScreenBitmap();
+        }
+
+        //User functions
+        private void RunLoop()
+        {
+            while (_emulator.IsPaused == false)
+            {
+                _emulator.Tick();
+
+                this.Invalidate();
+                this.Update();
+                this.Refresh();
+                Application.DoEvents();
+            }
         }
 
         private byte GetKeyFromKeyCode(Keys KeyCode)
@@ -104,58 +157,13 @@ namespace YACE_WinForms
             return byte.MaxValue;
         }
 
-        private void FrmMain_KeyUp(object sender, KeyEventArgs e)
+        private void LoadROM(string ROMFilename)
         {
-            byte key = GetKeyFromKeyCode(e.KeyCode);
-            if (key <= 0xF) 
-            _emulator.Input.SetKeyState(key, false);
-        }
+            byte[] rom = File.ReadAllBytes(ROMFilename);
+            _emulator.Memory.LoadROM(rom);
 
-        private void FrmMain_KeyDown(object sender, KeyEventArgs e)
-        {
-            byte key = GetKeyFromKeyCode(e.KeyCode);
-            if(key <= 0xF)
-            _emulator.Input.SetKeyState(key, true);
-        }
-
-        //Events
-        private void FrmMain_Move(object sender, EventArgs e)
-        {
-            UpdateFormDebug();
-            UpdateFormAssembly();
-        }
-
-        private void FrmMain_Shown(object sender, EventArgs e)
-        {
-            _frmDebug.Show();
-            UpdateFormDebug();
-
-            _frmAssembly.Show();
-            UpdateFormAssembly();
-
-            RunLoop();
-        }
-
-        private void Graphics_ScreenRefresh()
-        {
-            for (int y = 0; y < 32; y++)
-                for (int x = 0; x < 64; x++)
-                    internalBitmap.SetPixel(x, y, _emulator.Graphics.FrameBuffer[x, y] == 0 ? Color.Black : Color.Blue);
-            UpdateScreenBitmap();
-        }
-
-        //User functions
-        private void RunLoop()
-        {
-            while (_emulator.IsPaused == false)
-            {
-                _emulator.Tick();
-
-                this.Invalidate();
-                this.Update();
-                this.Refresh();
-                Application.DoEvents();
-            }
+            _disassembler.LoadROM(rom);
+            _disassembler.Disassemble();
         }
 
         private void UpdateFormDebug()
