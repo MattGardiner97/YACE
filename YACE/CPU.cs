@@ -27,6 +27,7 @@ namespace YACE
         private byte _waitingForInputTargetRegister;
 
         public event Action KeypressUnblocked;
+        public event Action ValueChanged;
 
         public CPU(Memory Memory, Graphics Graphics, Input Input)
         {

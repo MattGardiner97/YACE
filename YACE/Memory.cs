@@ -12,6 +12,8 @@ namespace YACE
         private const ushort FONT_DATA_BASE_ADDRESS = 0;
         private const ushort ROM_BASE_ADDRESS = 0X200;
 
+        private int _romSize = 0;
+
         public ushort FontDataBaseAddress { get { return FONT_DATA_BASE_ADDRESS; } }
         public ushort ROMBaseAddress { get { return ROM_BASE_ADDRESS; } }
 
@@ -46,6 +48,7 @@ namespace YACE
 
         public void LoadROM(byte[] ROM)
         {
+            _romSize = ROM.Length;
             Array.Copy(ROM, 0, RAM, ROM_BASE_ADDRESS, ROM.Length);
         }
 
@@ -109,6 +112,13 @@ namespace YACE
 
             StackPointer -= 2;
             ushort result = ReadShort(StackPointer);
+            return result;
+        }
+
+        public byte[] ReadROM()
+        {
+            byte[] result = new byte[_romSize];
+            Array.Copy(RAM, ROMBaseAddress, result, 0, _romSize);
             return result;
         }
     }
