@@ -16,7 +16,7 @@ namespace YACE_WinForms
 
         private RegisterTextbox txtPC;
         private RegisterTextbox[] txtRegisters;
-        private TextBox txtRegisterI;
+        private RegisterTextbox txtRegisterI;
         private Button btnStep;
         private Button btnPauseResume;
 
@@ -77,7 +77,14 @@ namespace YACE_WinForms
                     registerLeftSubPanel.Controls.Add(txtRegisters[i]);
                 else
                     registerRightSubPanel.Controls.Add(txtRegisters[i]);
+                txtRegisters[i].ValidValueEntered += (value) => { _emulator.CPU.Registers[i] = (byte)value; };
+                txtRegisters[i].InvalidValueEntered += () => { txtRegisters[i].Textbox.Text = _emulator.CPU.Registers[i].ToString("X2"); };
             }
+
+            //Register I
+            txtRegisterI = new RegisterTextbox("  I", 2);
+            txtRegisterI.ValidValueEntered += (value) => { _emulator.CPU.RegisterI = (ushort)(value); };
+            txtRegisterI.InvalidValueEntered += () => { txtRegisterI.Textbox.Text = _emulator.CPU.RegisterI.ToString("X4"); };
 
             //Step button
             btnStep = new Button()
@@ -89,7 +96,7 @@ namespace YACE_WinForms
 
             btnPauseResume = new Button()
             {
-                Text = "Pause"
+                Text = "Resume"
             };
             btnPauseResume.Click += (_, ___) =>
             {
@@ -100,6 +107,7 @@ namespace YACE_WinForms
 
             mainPanel.Controls.Add(txtPC);
             mainPanel.Controls.Add(registerFlowPanel);
+            mainPanel.Controls.Add(txtRegisterI);
             mainPanel.Controls.Add(btnStep);
             mainPanel.Controls.Add(btnPauseResume);
 
