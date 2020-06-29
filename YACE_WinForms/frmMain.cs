@@ -28,6 +28,7 @@ namespace YACE_WinForms
 
         private MenuStrip menuMain;
         private PictureBox picScreen;
+        private OpenFileDialog _loadROMDialog;
 
         public bool Paused { get; set; } = false;
 
@@ -86,13 +87,6 @@ namespace YACE_WinForms
 
         private void FrmMain_Shown(object sender, EventArgs e)
         {
-            _frmDebug.Show();
-            UpdateFormDebug();
-
-            _frmAssembly.Show();
-            UpdateFormAssembly();
-
-            RunLoop();
         }
 
         private void Graphics_ScreenRefresh()
@@ -164,6 +158,8 @@ namespace YACE_WinForms
 
             _disassembler.LoadROM(rom);
             _disassembler.Disassemble();
+
+            RunLoop();
         }
 
         private void UpdateFormDebug()
@@ -213,6 +209,15 @@ namespace YACE_WinForms
             _frmDebug = new frmDebug(_emulator);
             _frmAssembly = new frmAssembly(_emulator);
 
+            //Load ROM dialog
+            _loadROMDialog = new OpenFileDialog()
+            {
+                InitialDirectory = AppContext.BaseDirectory,
+                CheckFileExists = true,
+                Multiselect = false,
+                RestoreDirectory = false
+            };
+
             //Main menu strip
             menuMain = CreateMenuStrip();
 
@@ -248,6 +253,14 @@ namespace YACE_WinForms
             ToolStripMenuItem tsmiFileLoad = new ToolStripMenuItem()
             {
                 Text = "Load ROM"
+            };
+            tsmiFileLoad.Click += (_, __) =>
+            {
+                DialogResult dResult = _loadROMDialog.ShowDialog();
+                if(dResult == DialogResult.OK)
+                {
+                    LoadROM(_loadROMDialog.FileName);
+                }
             };
             dropdownFile.DropDownItems.Add(tsmiFileLoad);
 
