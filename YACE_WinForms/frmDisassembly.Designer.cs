@@ -1,6 +1,6 @@
 ﻿namespace YACE_WinForms
 {
-    partial class frmAssembly
+    partial class frmDisassembly
     {
         /// <summary>
         /// Required designer variable.

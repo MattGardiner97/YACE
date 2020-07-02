@@ -10,31 +10,29 @@ using YACE;
 
 namespace YACE_WinForms
 {
-    public partial class frmAssembly : Form
+    public partial class frmDisassembly : Form
     {
         private Emulator _emulator;
         private Disassembler _disassembler;
 
         private ListView listAssembly;
 
-        public frmAssembly(Emulator Emulator)
+        public frmDisassembly(Emulator Emulator)
         {
             _emulator = Emulator;
             byte[] rom = _emulator.Memory.ReadROM();
 
             _disassembler = new Disassembler(_emulator.Memory.ROMBaseAddress);
-            _disassembler.LoadROM(rom);
-            _disassembler.Disassemble();
 
             _emulator.Paused += () => { UpdateSelection(); };
             _emulator.CPU.ValueChanged += () => { UpdateSelection(); };
             _emulator.Ticked += () => { UpdateSelection(); };
-
+            _emulator.ROMLoaded += (Span<byte> ROM) => { UpdateDisassembly(ROM); UpdateDisassemblyList(); } ;
+            _emulator.Resumed += () => { listAssembly.Enabled = false; };
+            _emulator.Paused += () => { listAssembly.Enabled = true; };
 
             InitializeComponent();
             CreateComponents();
-
-            UpdateDisassembly();
         }
 
         private void CreateComponents()
@@ -44,12 +42,25 @@ namespace YACE_WinForms
                 View = View.Details,
                 Width = 300,
                 Height = 300,
-                FullRowSelect= true,
+                FullRowSelect = true,
                 MultiSelect = false,
+                Enabled = false
             };
-            listAssembly.Columns.Add("Location",(int)(listAssembly.Width * 0.25 -10));
-            listAssembly.Columns.Add("Opcode", (int)(listAssembly.Width * 0.25 -10));
-            listAssembly.Columns.Add("Assembly",(int)(listAssembly.Width* 0.5 -10));
+            listAssembly.Columns.Add("Location", (int)(listAssembly.Width * 0.25 - 10));
+            listAssembly.Columns.Add("Opcode", (int)(listAssembly.Width * 0.25 - 10));
+            listAssembly.Columns.Add("Assembly", (int)(listAssembly.Width * 0.5 - 10));
+
+            ContextMenuStrip ctxListAssembly = new ContextMenuStrip();
+            ctxListAssembly.Items.Add("Goto");
+            ctxListAssembly.Items[0].Click += (_, __) =>
+            {
+                if (listAssembly.SelectedItems.Count == 0)
+                    return;
+                ListViewItem selectedItem = listAssembly.SelectedItems[0];
+                ushort pc = ushort.Parse(selectedItem.Text, System.Globalization.NumberStyles.HexNumber, null);
+                _emulator.CPU.PC = pc;
+            };
+            listAssembly.ContextMenuStrip = ctxListAssembly;
 
             this.Controls.Add(listAssembly);
 
@@ -60,8 +71,14 @@ namespace YACE_WinForms
             this.Text = "Disassembler";
         }
 
-        public void UpdateDisassembly()
+        public void UpdateDisassembly(Span<byte> ROM)
         {
+            _disassembler.Disassemble(ROM);
+        }
+
+        public void UpdateDisassemblyList()
+        {
+            listAssembly.Items.Clear();
             for (int i = 0; i < _disassembler.Instructions.Count; i++)
             {
                 Instruction instruction = _disassembler.Instructions[i];
@@ -72,7 +89,7 @@ namespace YACE_WinForms
                 listAssembly.Items.Add(item);
             }
 
-            
+
         }
 
         public void UpdateSelection()

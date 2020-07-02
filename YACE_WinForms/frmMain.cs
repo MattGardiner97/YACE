@@ -12,25 +12,26 @@ using System.IO;
 using Graphics = System.Drawing.Graphics;
 
 using YACE;
+using System.Media;
 
 namespace YACE_WinForms
 {
     public partial class frmMain : Form
     {
         private Emulator _emulator;
-        private Disassembler _disassembler;
 
         Bitmap internalBitmap;
         Bitmap screenBitmap;
 
         private frmDebug _frmDebug;
-        private frmAssembly _frmAssembly;
+        private frmDisassembly _frmDisassembly;
 
         private MenuStrip menuMain;
         private PictureBox picScreen;
         private OpenFileDialog _loadROMDialog;
 
-        public bool Paused { get; set; } = false;
+        private bool _loopRunning = false;
+        private DateTime _lastBeepTime;
 
         public frmMain()
         {
@@ -43,14 +44,12 @@ namespace YACE_WinForms
             {
                 this.Text = $"YACE - Paused";
             };
-            _emulator.Resumed += () =>
+            _emulator.LateResumed += () =>
             {
                 this.Text = "YACE";
                 RunLoop();
             };
-
-            _disassembler = new Disassembler(_emulator.Memory.ROMBaseAddress);
-            
+            _emulator.CPU.Beeped += CPU_Beeped;
 
             CreateComponents();
 
@@ -58,31 +57,45 @@ namespace YACE_WinForms
 
             this.Shown += FrmMain_Shown;
             this.Move += FrmMain_Move;
-            this.KeyDown += FrmMain_KeyDown; 
+            this.KeyDown += FrmMain_KeyDown;
             this.KeyUp += FrmMain_KeyUp;
         }
 
-        
+        private void CPU_Beeped()
+        {
+            //We do this check to prevent multiple beeps occuring in a short time.
+            //This is because the ROM may take several ticks to update the sound timer, meaning the Beeped event can be called multiple times.
+            if ((DateTime.Now - _lastBeepTime).TotalSeconds > 1)
+            {
+                _lastBeepTime = DateTime.Now;
+                Task.Run(() =>
+                {
+                    Console.Beep(1200, 200);
+                });
+            }
+        }
+
+
 
         //Events
         private void FrmMain_KeyUp(object sender, KeyEventArgs e)
         {
             byte key = GetKeyFromKeyCode(e.KeyCode);
-            if (key <= 0xF) 
-            _emulator.Input.SetKeyState(key, false);
+            if (key <= 0xF)
+                _emulator.Input.SetKeyState(key, false);
         }
 
         private void FrmMain_KeyDown(object sender, KeyEventArgs e)
         {
             byte key = GetKeyFromKeyCode(e.KeyCode);
-            if(key <= 0xF)
-            _emulator.Input.SetKeyState(key, true);
+            if (key <= 0xF)
+                _emulator.Input.SetKeyState(key, true);
         }
 
         private void FrmMain_Move(object sender, EventArgs e)
         {
-            UpdateFormDebug();
-            UpdateFormAssembly();
+            RepositionFormDebug();
+            RepositionFormDisassembly();
         }
 
         private void FrmMain_Shown(object sender, EventArgs e)
@@ -100,8 +113,12 @@ namespace YACE_WinForms
         //User functions
         private void RunLoop()
         {
+            if (_loopRunning == true)
+                return;
+
             while (_emulator.IsPaused == false)
             {
+                _loopRunning = true;
                 _emulator.Tick();
 
                 this.Invalidate();
@@ -109,6 +126,7 @@ namespace YACE_WinForms
                 this.Refresh();
                 Application.DoEvents();
             }
+            _loopRunning = false;
         }
 
         private byte GetKeyFromKeyCode(Keys KeyCode)
@@ -154,24 +172,21 @@ namespace YACE_WinForms
         private void LoadROM(string ROMFilename)
         {
             byte[] rom = File.ReadAllBytes(ROMFilename);
-            _emulator.Memory.LoadROM(rom);
-
-            _disassembler.LoadROM(rom);
-            _disassembler.Disassemble();
+            _emulator.LoadROM(rom);
 
             RunLoop();
         }
 
-        private void UpdateFormDebug()
+        private void RepositionFormDebug()
         {
-            _frmDebug.Left = this.Right;
+            _frmDebug.Left = this.Location.X + this.ClientSize.Width;
             _frmDebug.Top = this.Top;
         }
 
-        private void UpdateFormAssembly()
+        private void RepositionFormDisassembly()
         {
-            _frmAssembly.Left = this.Left - _frmAssembly.Width;
-            _frmAssembly.Top = this.Top;
+            _frmDisassembly.Left = this.Left - _frmDisassembly.ClientSize.Width;
+            _frmDisassembly.Top = this.Top;
         }
 
         private void InitialiseBitmap()
@@ -207,7 +222,10 @@ namespace YACE_WinForms
 
             //Create other forms
             _frmDebug = new frmDebug(_emulator);
-            _frmAssembly = new frmAssembly(_emulator);
+            _frmDisassembly = new frmDisassembly(_emulator);
+
+            _frmDebug.Shown += (_, __) => { RepositionFormDebug(); };
+            _frmDisassembly.Shown += (_, __) => { RepositionFormDisassembly(); };
 
             //Load ROM dialog
             _loadROMDialog = new OpenFileDialog()
@@ -231,6 +249,7 @@ namespace YACE_WinForms
 
             this.Text = "YACE";
             this.Controls.Add(mainPanel);
+            this.StartPosition = FormStartPosition.CenterScreen;
             mainPanel.Controls.Add(menuMain, 0, 0);
             mainPanel.Controls.Add(picScreen, 0, 1);
         }
@@ -243,6 +262,10 @@ namespace YACE_WinForms
             ToolStripMenuItem dropdownFile = new ToolStripMenuItem()
             {
                 Text = "File"
+            };
+            ToolStripMenuItem dropdownEmulator = new ToolStripMenuItem()
+            {
+                Text = "Emulator"
             };
             ToolStripMenuItem dropdownWindow = new ToolStripMenuItem()
             {
@@ -257,23 +280,51 @@ namespace YACE_WinForms
             tsmiFileLoad.Click += (_, __) =>
             {
                 DialogResult dResult = _loadROMDialog.ShowDialog();
-                if(dResult == DialogResult.OK)
+                if (dResult == DialogResult.OK)
                 {
                     LoadROM(_loadROMDialog.FileName);
                 }
             };
             dropdownFile.DropDownItems.Add(tsmiFileLoad);
 
+            //Emulator menu subitems
+            ToolStripMenuItem tsmiEmulatorPause = new ToolStripMenuItem()
+            {
+                Text = "Pause",
+                Enabled = false
+            };
+            tsmiEmulatorPause.Click += (_, __) =>
+            {
+                if (_emulator.IsPaused == true)
+                    _emulator.Resume();
+                else
+                    _emulator.Pause();
+            };
+
+            _emulator.ROMLoaded += (_) => { tsmiEmulatorPause.Enabled = true; };
+            _emulator.Paused += () => { tsmiEmulatorPause.Text = "Resume"; };
+            _emulator.Resumed += () => { tsmiEmulatorPause.Text = "Pause"; };
+            dropdownEmulator.DropDownItems.Add(tsmiEmulatorPause);
+
             //Window menu subitems
             ToolStripMenuItem tsmiWindowDebug = new ToolStripMenuItem()
             {
-                Text = "Debug Window",
+                Text = "Debug",
             };
             tsmiWindowDebug.Click += (_, __) => { _frmDebug.Show(); };
+
+            ToolStripMenuItem tsmiWindowDisassembly = new ToolStripMenuItem()
+            {
+                Text = "Disassembly"
+            };
+            tsmiWindowDisassembly.Click += (_, __) => { _frmDisassembly.Show(); };
+
             dropdownWindow.DropDownItems.Add(tsmiWindowDebug);
+            dropdownWindow.DropDownItems.Add(tsmiWindowDisassembly);
 
             //Add menu strip items
             result.Items.Add(dropdownFile);
+            result.Items.Add(dropdownEmulator);
             result.Items.Add(dropdownWindow);
 
             return result;

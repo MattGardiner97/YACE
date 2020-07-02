@@ -8,7 +8,6 @@ namespace YACE_WinForms
     public class Disassembler
     {
         private int _baseAddress;
-        private byte[] _rom;
 
         public List<Instruction> Instructions { get; private set; }
 
@@ -19,17 +18,13 @@ namespace YACE_WinForms
             Instructions = new List<Instruction>();
         }
 
-        public void LoadROM(byte[] ROM)
+        public void Disassemble(Span<byte> ROM)
         {
-            _rom = new byte[ROM.Length];
-            Array.Copy(ROM, _rom, ROM.Length);
-        }
+            Instructions.Clear();
 
-        public void Disassemble()
-        {
-            for (int i = 0; i < _rom.Length; i += 2)
+            for (int i = 0; i < ROM.Length; i += 2)
             {
-                ushort opcode = (ushort)(_rom[i] << 8 | _rom[i + 1]);
+                ushort opcode = (ushort)(ROM[i] << 8 | ROM[i + 1]);
                 ushort location = (ushort)(_baseAddress + i);
                 string address = Hex((opcode & 0xFFF), 4);
                 string value = Hex((opcode & 0xFF), 2);
