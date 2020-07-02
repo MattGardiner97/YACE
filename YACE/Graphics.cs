@@ -23,6 +23,11 @@ namespace YACE
             FrameBuffer = new byte[64, 32];
         }
 
+        public void Reset()
+        {
+            ClearDisplay();
+        }
+
         public void ClearDisplay()
         {
             for(int y = 0;y<FrameBuffer.GetUpperBound(1) + 1; y++)

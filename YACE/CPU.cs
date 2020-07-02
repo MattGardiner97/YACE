@@ -26,8 +26,10 @@ namespace YACE
         public bool WaitingForInput { get; set; } = false;
         private byte _waitingForInputTargetRegister;
 
-        public event Action KeypressUnblocked;
+        //Occurs when a key is pressed while the CPU is blocked and awaiting a key press (Opcode 0xFX0A)
+        public event Action UnblockedByKeypress;
         public event Action ValueChanged;
+        public event Action Beeped;
 
         public CPU(Memory Memory, Graphics Graphics, Input Input)
         {
@@ -44,6 +46,17 @@ namespace YACE
             Registers = new byte[16];
         }
 
+        public void Reset()
+        {
+            PC = _memory.ROMBaseAddress;
+            for (int i = 0; i < 16; i++)
+                Registers[i] = 0;
+            RegisterI = 0;
+            DelayTimer = 0;
+            SoundTimer = 0;
+            WaitingForInput = false;
+        }
+
         public void Tick()
         {
             if (DelayTimer != 0 && (DateTime.Now - _delayTimerLastTick).TotalMilliseconds >= 1 / 60)
@@ -51,18 +64,11 @@ namespace YACE
                 DelayTimer--;
                 _delayTimerLastTick = DateTime.Now;
             }
-            if (SoundTimer != 0)
+            if (SoundTimer != 0 && (DateTime.Now - _soundTimerLastTick).TotalMilliseconds >= 1 / 60)
             {
-                throw new NotImplementedException("Beep");
-                if ((DateTime.Now - _soundTimerLastTick).TotalMilliseconds >= 1 / 60)
-                {
-                    SoundTimer--;
-                    _soundTimerLastTick = DateTime.Now;
-                }
-            }
-            else if(SoundTimer == 0)
-            {
-
+                Beeped?.Invoke();
+                SoundTimer--;
+                _soundTimerLastTick = DateTime.Now;
             }
 
             if (WaitingForInput == false)
@@ -72,7 +78,7 @@ namespace YACE
                 Execute(func);
             }
 
-            
+
         }
 
         private ushort Fetch()
@@ -229,7 +235,7 @@ namespace YACE
                 Registers[_waitingForInputTargetRegister] = Keycode;
                 WaitingForInput = false;
                 PC += 2;
-                KeypressUnblocked?.Invoke();
+                UnblockedByKeypress?.Invoke();
             }
         }
 

@@ -9,24 +9,17 @@ namespace YACE
         public Input Input { get; private set; }
         public CPU CPU { get; private set; }
 
-        private bool _isPaused = false;
-
-        public bool IsPaused
-        {
-            get { return _isPaused; }
-            set
-            {
-                _isPaused = value;
-                if (value == true)
-                    Paused?.Invoke();
-                else
-                    Resumed?.Invoke();
-            }
-        }
+        public bool IsPaused { get; private set; } = false;
+        public bool ROMIsLoaded { get; private set; } = false;
 
         public event Action Ticked;
         public event Action Paused;
         public event Action Resumed;
+        //We use LateResumed only to begin the loop again on the main form. This ensures any other functions subscribed to 'Resumed' get to run.
+        public event Action LateResumed; 
+
+        public delegate void ROMLoadedDelegate(Span<byte> ROM);
+        public event ROMLoadedDelegate ROMLoaded;
 
         public Emulator()
         {
@@ -35,15 +28,52 @@ namespace YACE
             Input = new Input();
             CPU = new CPU(Memory, Graphics, Input);
 
-            CPU.KeypressUnblocked += () => { if (_isPaused == true) Ticked?.Invoke(); };
+            CPU.UnblockedByKeypress += () => { if (IsPaused == true) Ticked?.Invoke(); };
         }
 
         public void Tick()
         {
             CPU.Tick();
-            if (_isPaused == true)
+            if (IsPaused == true)
                 Ticked?.Invoke();
         }
 
+        public void Pause()
+        {
+            if (ROMIsLoaded == false)
+                return;
+
+            IsPaused = true;
+            Paused?.Invoke();
+        }
+
+        public void Resume()
+        {
+            if (ROMIsLoaded == false)
+                return;
+
+            IsPaused = false;
+            Resumed?.Invoke();
+
+            LateResumed?.Invoke();
+        }
+
+        public void LoadROM(byte[] ROM)
+        {
+            Reset();
+            Memory.LoadROM(ROM);
+
+            ROMIsLoaded = true;
+
+            Span<byte> romSpan = Memory.RAM.AsSpan<byte>(Memory.ROMBaseAddress,ROM.Length);
+            ROMLoaded?.Invoke(romSpan);
+        }
+
+        public void Reset()
+        {
+            Memory.Reset();
+            Graphics.Reset();
+            CPU.Reset();
+        }
     }
 }

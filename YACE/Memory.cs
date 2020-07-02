@@ -21,6 +21,7 @@ namespace YACE
 
         public ushort StackPointer { get; set; } = 0xEA0;
 
+
         public Memory()
         {
             RAM = new byte[RAM_SIZE];
@@ -50,6 +51,8 @@ namespace YACE
         {
             _romSize = ROM.Length;
             Array.Copy(ROM, 0, RAM, ROM_BASE_ADDRESS, ROM.Length);
+
+            Span<byte> romSpan = RAM.AsSpan<byte>(ROM_BASE_ADDRESS, ROM.Length);
         }
 
         public byte ReadByte(ushort Address)
@@ -120,6 +123,11 @@ namespace YACE
             byte[] result = new byte[_romSize];
             Array.Copy(RAM, ROMBaseAddress, result, 0, _romSize);
             return result;
+        }
+
+        public void Reset()
+        {
+            StackPointer = 0xEA0;
         }
     }
 }
