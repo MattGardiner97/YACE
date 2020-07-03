@@ -25,6 +25,7 @@ namespace YACE_WinForms
 
         private frmDebug _frmDebug;
         private frmDisassembly _frmDisassembly;
+        private frmMemoryViewer _frmMemoryViewer;
 
         private MenuStrip menuMain;
         private PictureBox picScreen;
@@ -94,8 +95,6 @@ namespace YACE_WinForms
 
         private void FrmMain_Move(object sender, EventArgs e)
         {
-            RepositionFormDebug();
-            RepositionFormDisassembly();
         }
 
         private void FrmMain_Shown(object sender, EventArgs e)
@@ -177,18 +176,6 @@ namespace YACE_WinForms
             RunLoop();
         }
 
-        private void RepositionFormDebug()
-        {
-            _frmDebug.Left = this.Location.X + this.ClientSize.Width;
-            _frmDebug.Top = this.Top;
-        }
-
-        private void RepositionFormDisassembly()
-        {
-            _frmDisassembly.Left = this.Left - _frmDisassembly.ClientSize.Width;
-            _frmDisassembly.Top = this.Top;
-        }
-
         private void InitialiseBitmap()
         {
             internalBitmap = new Bitmap(64, 32);
@@ -223,9 +210,7 @@ namespace YACE_WinForms
             //Create other forms
             _frmDebug = new frmDebug(_emulator);
             _frmDisassembly = new frmDisassembly(_emulator);
-
-            _frmDebug.Shown += (_, __) => { RepositionFormDebug(); };
-            _frmDisassembly.Shown += (_, __) => { RepositionFormDisassembly(); };
+            _frmMemoryViewer = new frmMemoryViewer(_emulator);
 
             //Load ROM dialog
             _loadROMDialog = new OpenFileDialog()
@@ -311,7 +296,7 @@ namespace YACE_WinForms
             {
                 Text = "Debug",
             };
-            tsmiWindowDebug.Click += (_, __) => { _frmDebug.Show(); };
+            tsmiWindowDebug.Click += (_, __) => { _frmDebug.Show();  };
 
             ToolStripMenuItem tsmiWindowDisassembly = new ToolStripMenuItem()
             {
@@ -319,8 +304,18 @@ namespace YACE_WinForms
             };
             tsmiWindowDisassembly.Click += (_, __) => { _frmDisassembly.Show(); };
 
-            dropdownWindow.DropDownItems.Add(tsmiWindowDebug);
-            dropdownWindow.DropDownItems.Add(tsmiWindowDisassembly);
+            ToolStripMenuItem tsmiWindowMemoryViewer = new ToolStripMenuItem()
+            {
+                Text = "Memory Viewer"
+            };
+            tsmiWindowMemoryViewer.Click += (_, __) => { _frmMemoryViewer.Show();  };
+
+            dropdownWindow.DropDownItems.AddRange(new ToolStripItem[]
+            {
+                tsmiWindowDebug,
+                tsmiWindowDisassembly,
+                tsmiWindowMemoryViewer
+            });
 
             //Add menu strip items
             result.Items.Add(dropdownFile);

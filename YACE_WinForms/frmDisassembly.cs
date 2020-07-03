@@ -68,6 +68,7 @@ namespace YACE_WinForms
             this.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             this.MinimizeBox = false;
             this.MaximizeBox = false;
+            this.ShowIcon = false;
             this.Text = "Disassembler";
         }
 
