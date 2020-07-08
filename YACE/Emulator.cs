@@ -1,23 +1,27 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("YACE_Tests")]
 
 namespace YACE
 {
     public class Emulator
     {
-        public Memory Memory { get; private set; }
+
+        internal Memory Memory { get; private set; }
         public Graphics Graphics { get; private set; }
         public Input Input { get; private set; }
-        public CPU CPU { get; private set; }
+        internal CPU CPU { get; private set; }
+        public Debugger Debugger { get; private set; }
 
         public bool IsPaused { get; private set; } = false;
         public bool ROMIsLoaded { get; private set; } = false;
 
-        public event Action Ticked;
         public event Action Paused;
         public event Action Resumed;
         //We use LateResumed only to begin the loop again on the main form. This ensures any other functions subscribed to 'Resumed' get to run.
-        public event Action LateResumed; 
-
+        public event Action LateResumed;
+        public event Action Beeped;
         public delegate void ROMLoadedDelegate(Span<byte> ROM);
         public event ROMLoadedDelegate ROMLoaded;
 
@@ -27,15 +31,14 @@ namespace YACE
             Graphics = new Graphics(Memory);
             Input = new Input();
             CPU = new CPU(Memory, Graphics, Input);
+            Debugger = new Debugger(this, CPU,Memory);
 
-            CPU.UnblockedByKeypress += () => { if (IsPaused == true) Ticked?.Invoke(); };
+            CPU.Beeped += () => { this.Beeped?.Invoke(); };
         }
 
         public void Tick()
         {
             CPU.Tick();
-            if (IsPaused == true)
-                Ticked?.Invoke();
         }
 
         public void Pause()

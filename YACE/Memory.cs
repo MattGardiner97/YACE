@@ -118,11 +118,10 @@ namespace YACE
             return result;
         }
 
-        public byte[] ReadROM()
+        public Span<byte> ReadROM()
         {
-            byte[] result = new byte[_romSize];
-            Array.Copy(RAM, ROMBaseAddress, result, 0, _romSize);
-            return result;
+            Span<byte> rom = RAM.AsSpan<byte>(ROMBaseAddress, _romSize);
+            return rom;
         }
 
         public void Reset()
