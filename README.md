@@ -6,4 +6,4 @@ A CHIP-8 emulator written in C#. The system is a .NET Standard 2.0 class library
 * Runs CHIP-8 ROMs with correct timing
 * Debug window
 * Disassembler window
-* Memory viewer (coming soon)
+* Memory viewer
