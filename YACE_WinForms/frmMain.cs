@@ -50,7 +50,7 @@ namespace YACE_WinForms
                 this.Text = "YACE";
                 RunLoop();
             };
-            _emulator.CPU.Beeped += CPU_Beeped;
+            _emulator.Beeped += Emulator_Beeped;
 
             CreateComponents();
 
@@ -62,7 +62,7 @@ namespace YACE_WinForms
             this.KeyUp += FrmMain_KeyUp;
         }
 
-        private void CPU_Beeped()
+        private void Emulator_Beeped()
         {
             //We do this check to prevent multiple beeps occuring in a short time.
             //This is because the ROM may take several ticks to update the sound timer, meaning the Beeped event can be called multiple times.

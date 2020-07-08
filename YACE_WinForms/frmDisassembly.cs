@@ -20,16 +20,13 @@ namespace YACE_WinForms
         public frmDisassembly(Emulator Emulator)
         {
             _emulator = Emulator;
-            byte[] rom = _emulator.Memory.ReadROM();
 
-            _disassembler = new Disassembler(_emulator.Memory.ROMBaseAddress);
+            _disassembler = new Disassembler(_emulator.Debugger.GetROMBaseAddress());
 
-            _emulator.Paused += () => { UpdateSelection(); };
-            _emulator.CPU.ValueChanged += () => { UpdateSelection(); };
-            _emulator.Ticked += () => { UpdateSelection(); };
-            _emulator.ROMLoaded += (Span<byte> ROM) => { UpdateDisassembly(ROM); UpdateDisassemblyList(); } ;
+            _emulator.Paused += () => { UpdateSelection(); listAssembly.Enabled = true; } ;
             _emulator.Resumed += () => { listAssembly.Enabled = false; };
-            _emulator.Paused += () => { listAssembly.Enabled = true; };
+            _emulator.Debugger.Stepped += UpdateSelection;
+            _emulator.ROMLoaded += (Span<byte> ROM) => { UpdateDisassembly(ROM); UpdateDisassemblyList(); } ;
 
             InitializeComponent();
             CreateComponents();
@@ -58,7 +55,7 @@ namespace YACE_WinForms
                     return;
                 ListViewItem selectedItem = listAssembly.SelectedItems[0];
                 ushort pc = ushort.Parse(selectedItem.Text, System.Globalization.NumberStyles.HexNumber, null);
-                _emulator.CPU.PC = pc;
+                _emulator.Debugger.SetProgramCounter(pc);
             };
             listAssembly.ContextMenuStrip = ctxListAssembly;
 
@@ -95,7 +92,7 @@ namespace YACE_WinForms
 
         public void UpdateSelection()
         {
-            string searchValue = _emulator.CPU.PC.ToString("X4");
+            string searchValue = _emulator.Debugger.GetProgramCounter().ToString("X4");
             for (int i = 0; i < listAssembly.Items.Count; i++)
             {
                 if (listAssembly.Items[i].Text == searchValue)

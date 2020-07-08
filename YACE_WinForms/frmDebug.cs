@@ -22,9 +22,9 @@ namespace YACE_WinForms
         public frmDebug(Emulator Emulator)
         {
             _emulator = Emulator;
-            _emulator.Ticked += EmulatorTicked;
+            _emulator.Debugger.Stepped += EmulatorStepped;
             _emulator.Paused += () => { UpdateDebugInfo(); btnStep.Enabled = true; };
-            _emulator.CPU.ValueChanged += () => { UpdateDebugInfo(); };
+            _emulator.Debugger.RegisterValueChanged += () => { UpdateDebugInfo(); };
 
             InitializeComponent();
 
@@ -46,8 +46,8 @@ namespace YACE_WinForms
 
             //PC register
             txtPC = new RegisterTextbox("PC", 2);
-            txtPC.ValidValueEntered += (value) => { _emulator.CPU.PC = (ushort)(value); };
-            txtPC.InvalidValueEntered += () => { txtPC.Textbox.Text = _emulator.CPU.PC.ToString("X4"); };
+            txtPC.ValidValueEntered += (value) => { _emulator.Debugger.SetProgramCounter((ushort)value); };
+            txtPC.InvalidValueEntered += () => { txtPC.Textbox.Text = _emulator.Debugger.GetProgramCounter().ToString("X4"); };
 
             //Main registers
             FlowLayoutPanel registerFlowPanel = new FlowLayoutPanel() { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
@@ -76,14 +76,14 @@ namespace YACE_WinForms
                     registerLeftSubPanel.Controls.Add(txtRegisters[i]);
                 else
                     registerRightSubPanel.Controls.Add(txtRegisters[i]);
-                txtRegisters[i].ValidValueEntered += (value) => { _emulator.CPU.Registers[i] = (byte)value; };
-                txtRegisters[i].InvalidValueEntered += () => { txtRegisters[i].Textbox.Text = _emulator.CPU.Registers[i].ToString("X2"); };
+                txtRegisters[i].ValidValueEntered += (value) => { _emulator.Debugger.SetMainRegister(i, (byte)value); };
+                txtRegisters[i].InvalidValueEntered += () => { txtRegisters[i].Textbox.Text = _emulator.Debugger.GetMainRegister(i).ToString("X2"); };
             }
 
             //Register I
             txtRegisterI = new RegisterTextbox("  I", 2);
-            txtRegisterI.ValidValueEntered += (value) => { _emulator.CPU.RegisterI = (ushort)(value); };
-            txtRegisterI.InvalidValueEntered += () => { txtRegisterI.Textbox.Text = _emulator.CPU.RegisterI.ToString("X4"); };
+            txtRegisterI.ValidValueEntered += (value) => { _emulator.Debugger.SetRegisterI((ushort)value); };
+            txtRegisterI.InvalidValueEntered += () => { txtRegisterI.Textbox.Text = _emulator.Debugger.GetRegisterI().ToString("X4"); };
 
             //Step button
             btnStep = new Button()
@@ -110,12 +110,12 @@ namespace YACE_WinForms
 
         public void UpdateDebugInfo()
         {
-            txtPC.Textbox.Text = _emulator.CPU.PC.ToString("X4");
+            txtPC.Textbox.Text = _emulator.Debugger.GetProgramCounter().ToString("X4");
             for (int i = 0; i < 16; i++)
-                txtRegisters[i].Textbox.Text = _emulator.CPU.Registers[i].ToString("X2");
+                txtRegisters[i].Textbox.Text = _emulator.Debugger.GetMainRegister(i).ToString("X2");
         }
 
-        private void EmulatorTicked()
+        private void EmulatorStepped()
         {
             UpdateDebugInfo();
         }

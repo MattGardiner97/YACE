@@ -31,7 +31,7 @@ namespace YACE_WinForms
 
         private void UpdateMemory()
         {
-            byte[] RAM = _emulator.Memory.RAM;
+            byte[] RAM = _emulator.Debugger.GetRAM();
 
             gridMemory.RowCount = (int)Math.Ceiling((double)(RAM.Length / LINE_SIZE));
             
@@ -102,11 +102,11 @@ namespace YACE_WinForms
             byte parsedValue = 0;
             if (byte.TryParse(stringValue, System.Globalization.NumberStyles.HexNumber, null, out parsedValue))
             {
-                _emulator.Memory.RAM[address] = parsedValue;
-                cell.Value = _emulator.Memory.RAM[address].ToString("X2"); //Ensure the new value is formatted nicely
+                _emulator.Debugger.GetRAM()[address] = parsedValue;
+                cell.Value = _emulator.Debugger.GetRAM()[address].ToString("X2"); //Ensure the new value is formatted nicely
             }
             else
-                cell.Value = _emulator.Memory.RAM[address].ToString("X2");
+                cell.Value = _emulator.Debugger.GetRAM()[address].ToString("X2");
         }
     }
 }
