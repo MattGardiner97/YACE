@@ -5,6 +5,9 @@ using System.Text;
 
 namespace YACE
 {
+    /// <summary>
+    /// Executes the CPU instructions from the ROM in memory.
+    /// </summary>
     public class CPU
     {
         private Memory _memory;
@@ -12,23 +15,50 @@ namespace YACE
         private Input _input;
         private Random _random;
 
+        /// <summary>
+        /// Program Counter. Memory location of the next instruction to be executed.
+        /// </summary>
         public ushort PC { get; set; }
+        /// <summary>
+        /// Registers 0x0 - 0xF (0-15).
+        /// </summary>
         public byte[] Registers { get; private set; }
+        /// <summary>
+        /// Address Register. Used by instructions that require a 2 byte address to be supplied.
+        /// </summary>
         public ushort RegisterI { get; set; }
+        /// <summary>
+        /// The delay timer counts down at a rate of 60Hz and can be used for timing.
+        /// </summary>
         public byte DelayTimer { get; set; }
+        /// <summary>
+        /// The sound timer counts down at a rate of 60Hz and emits a noise when the value is non-zero.
+        /// </summary>
         public byte SoundTimer { get; set; }
 
+        //The currently decoded opcode.
         private ushort _opcode;
 
+        //The time the timers ticked last. This is used to roughly calculate when they should decrement.
         private DateTime _delayTimerLastTick;
         private DateTime _soundTimerLastTick;
 
+        /// <summary>
+        /// Indicates that the program is currently blocked and waiting for user input.
+        /// </summary>
         public bool WaitingForInput { get; set; } = false;
+        /// <summary>
+        /// The register to store the pressed key value in.
+        /// </summary>
         private byte _waitingForInputTargetRegister;
 
-        //Occurs when a key is pressed while the CPU is blocked and awaiting a key press (Opcode 0xFX0A)
+        /// <summary>
+        ///Occurs when a key is pressed while the CPU is blocked and awaiting a key press (Opcode 0xFX0A)
+        /// </summary>
         public event Action UnblockedByKeypress;
-        public event Action ValueChanged;
+        /// <summary>
+        /// Raised when the value of SoundTimer is non-zero.
+        /// </summary>
         public event Action Beeped;
 
         public CPU(Memory Memory, Graphics Graphics, Input Input)
@@ -46,6 +76,9 @@ namespace YACE
             Registers = new byte[16];
         }
 
+        /// <summary>
+        /// Resets the value of all registers.
+        /// </summary>
         public void Reset()
         {
             PC = _memory.ROMBaseAddress;
@@ -57,6 +90,9 @@ namespace YACE
             WaitingForInput = false;
         }
 
+        /// <summary>
+        /// Executes the next instruction in memory and updates any timers as needed.
+        /// </summary>
         public void Tick()
         {
             if (DelayTimer != 0 && (DateTime.Now - _delayTimerLastTick).TotalMilliseconds >= 1 / 60)
@@ -81,11 +117,20 @@ namespace YACE
 
         }
 
+        /// <summary>
+        /// Retrieves the next opcode from memory.
+        /// </summary>
+        /// <returns>The opcode to be executed next.</returns>
         private ushort Fetch()
         {
             return (ushort)_memory.ReadShort(PC);
         }
 
+        /// <summary>
+        /// Determines which function to call next based on the current opcode.
+        /// </summary>
+        /// <param name="Opcode">The opcode to be decoded.</param>
+        /// <returns>A delegate pointing to the next function which should be called.</returns>
         private Func<ushort> Decode(ushort Opcode)
         {
             Func<ushort> result = null;
@@ -221,13 +266,20 @@ namespace YACE
             return result;
         }
 
+        /// <summary>
+        /// Executes the next instruction and increments the program counter.
+        /// </summary>
+        /// <param name="Func">The function to call.</param>
         private void Execute(Func<ushort> Func)
         {
             ushort pcIncrementCount = Func();
             PC += pcIncrementCount;
         }
 
-        //Event handlers
+        /// <summary>
+        /// Handles a key being pressed while the program is blocked.
+        /// </summary>
+        /// <param name="Keycode">The keycode of the pressed key (0x0 - 0xF).</param>
         private void KeyPressEventHandler(byte Keycode)
         {
             if (WaitingForInput == true)

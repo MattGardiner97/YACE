@@ -1,0 +1,184 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>YACE</name>
+    </assembly>
+    <members>
+        <member name="T:YACE.CPU">
+            <summary>
+            Executes the CPU instructions from the ROM in memory.
+            </summary>
+        </member>
+        <member name="P:YACE.CPU.PC">
+            <summary>
+            Program Counter. Memory location of the next instruction to be executed.
+            </summary>
+        </member>
+        <member name="P:YACE.CPU.Registers">
+            <summary>
+            Registers 0x0 - 0xF (0-15).
+            </summary>
+        </member>
+        <member name="P:YACE.CPU.RegisterI">
+            <summary>
+            Address Register. Used by instructions that require a 2 byte address to be supplied.
+            </summary>
+        </member>
+        <member name="P:YACE.CPU.DelayTimer">
+            <summary>
+            The delay timer counts down at a rate of 60Hz and can be used for timing.
+            </summary>
+        </member>
+        <member name="P:YACE.CPU.SoundTimer">
+            <summary>
+            The sound timer counts down at a rate of 60Hz and emits a noise when the value is non-zero.
+            </summary>
+        </member>
+        <member name="P:YACE.CPU.WaitingForInput">
+            <summary>
+            Indicates that the program is currently blocked and waiting for user input.
+            </summary>
+        </member>
+        <member name="F:YACE.CPU._waitingForInputTargetRegister">
+            <summary>
+            The register to store the pressed key value in.
+            </summary>
+        </member>
+        <member name="E:YACE.CPU.UnblockedByKeypress">
+             <summary>
+            Occurs when a key is pressed while the CPU is blocked and awaiting a key press (Opcode 0xFX0A)
+             </summary>
+        </member>
+        <member name="E:YACE.CPU.Beeped">
+            <summary>
+            Raised when the value of SoundTimer is non-zero.
+            </summary>
+        </member>
+        <member name="M:YACE.CPU.Reset">
+            <summary>
+            Resets the value of all registers.
+            </summary>
+        </member>
+        <member name="M:YACE.CPU.Tick">
+            <summary>
+            Executes the next instruction in memory and updates any timers as needed.
+            </summary>
+        </member>
+        <member name="M:YACE.CPU.Fetch">
+            <summary>
+            Retrieves the next opcode from memory.
+            </summary>
+            <returns>The opcode to be executed next.</returns>
+        </member>
+        <member name="M:YACE.CPU.Decode(System.UInt16)">
+            <summary>
+            Determines which function to call next based on the current opcode.
+            </summary>
+            <param name="Opcode">The opcode to be decoded.</param>
+            <returns>A delegate pointing to the next function which should be called.</returns>
+        </member>
+        <member name="M:YACE.CPU.Execute(System.Func{System.UInt16})">
+            <summary>
+            Executes the next instruction and increments the program counter.
+            </summary>
+            <param name="Func">The function to call.</param>
+        </member>
+        <member name="M:YACE.CPU.KeyPressEventHandler(System.Byte)">
+            <summary>
+            Handles a key being pressed while the program is blocked.
+            </summary>
+            <param name="Keycode">The keycode of the pressed key (0x0 - 0xF).</param>
+        </member>
+        <member name="T:YACE.Emulator">
+            <summary>
+            Main class responsible for emulation
+            </summary>
+        </member>
+        <member name="P:YACE.Emulator.Memory">
+            <summary>
+            Represents the device's volatile memory (RAM)
+            </summary>
+        </member>
+        <member name="P:YACE.Emulator.Graphics">
+            <summary>
+            Handles drawing operations for the device
+            </summary>
+        </member>
+        <member name="P:YACE.Emulator.Input">
+            <summary>
+            Handles user input for the device
+            </summary>
+        </member>
+        <member name="P:YACE.Emulator.CPU">
+            <summary>
+            Performs the core of the emulation work
+            </summary>
+        </member>
+        <member name="P:YACE.Emulator.Debugger">
+            <summary>
+            Bridge between library consumers and emulator internals
+            </summary>
+        </member>
+        <member name="P:YACE.Emulator.IsPaused">
+            <summary>
+            Represents whether the device is currently paused
+            </summary>
+        </member>
+        <member name="P:YACE.Emulator.ROMIsLoaded">
+            <summary>
+            Represents whether a ROM is currently loaded
+            </summary>
+        </member>
+        <member name="E:YACE.Emulator.Paused">
+            <summary>
+            Raised when the emulator is paused.
+            </summary>
+        </member>
+        <member name="E:YACE.Emulator.Resumed">
+            <summary>
+            Raised when the emulator is resumed.
+            </summary>
+        </member>
+        <member name="E:YACE.Emulator.LateResumed">
+            <summary>
+            Raised after the <see cref="E:YACE.Emulator.Resumed"/> event is raised.
+            </summary>
+        </member>
+        <member name="E:YACE.Emulator.Beeped">
+            <summary>
+            Raised when the emulator needs to play a sound effect. Playing the sound is performed by the frontend subscribed to this event.
+            </summary>
+        </member>
+        <member name="E:YACE.Emulator.ROMLoaded">
+            <summary>
+            Raised when a ROM is loaded into memory.
+            </summary>
+        </member>
+        <member name="M:YACE.Emulator.Tick">
+            <summary>
+            Executes a single instruction on the CPU
+            </summary>
+        </member>
+        <member name="M:YACE.Emulator.Pause">
+            <summary>
+            Pauses emulation.
+            </summary>
+        </member>
+        <member name="M:YACE.Emulator.Resume">
+            <summary>
+            Resumes emulation.
+            </summary>
+        </member>
+        <member name="M:YACE.Emulator.LoadROM(System.Byte[])">
+            <summary>
+            Resets the state of the machine and loads a new ROM into main memory.
+            </summary>
+            <param name="ROM"></param>
+        </member>
+        <member name="M:YACE.Emulator.Reset">
+            <summary>
+            Resets the state of the machine.
+            </summary>
+        </member>
+    </members>
+</doc>
