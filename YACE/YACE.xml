@@ -89,6 +89,82 @@
             </summary>
             <param name="Keycode">The keycode of the pressed key (0x0 - 0xF).</param>
         </member>
+        <member name="T:YACE.Debugger">
+            <summary>
+            Class for accessing emulator debug information
+            </summary>
+        </member>
+        <member name="E:YACE.Debugger.RegisterValueChanged">
+            <summary>
+            Occurs when a register's value is changed via the debugger.
+            </summary>
+        </member>
+        <member name="E:YACE.Debugger.Stepped">
+            <summary>
+            Occurs when the emulator is stepped using the debugger.
+            </summary>
+        </member>
+        <member name="M:YACE.Debugger.GetProgramCounter">
+            <summary>
+            Get the current Program Counter register value
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YACE.Debugger.SetProgramCounter(System.UInt16)">
+            <summary>
+            Set the current Program Counter register value.
+            </summary>
+            <param name="Value"></param>
+        </member>
+        <member name="M:YACE.Debugger.GetMainRegister(System.Int32)">
+            <summary>.
+            Get the value of the specified register
+            </summary>
+            <param name="RegisterIndex">The index of the register (0x0 - 0xF).</param>
+            <returns>The register value</returns>
+        </member>
+        <member name="M:YACE.Debugger.SetMainRegister(System.Int32,System.Byte)">
+            <summary>
+            Sets the value of the specified register
+            </summary>
+            <param name="RegisterIndex">The index of the register (0x0 - 0xF).</param>
+            <param name="Value">The new value</param>
+        </member>
+        <member name="M:YACE.Debugger.GetRegisterI">
+            <summary>
+            Get the value of register I (address register).
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YACE.Debugger.SetRegisterI(System.UInt16)">
+            <summary>
+            Set the value of register I (address register).
+            </summary>
+            <param name="Value"></param>
+        </member>
+        <member name="M:YACE.Debugger.Step">
+            <summary>
+            Execute a single instruction on the CPU and then raise the stepped event.
+            </summary>
+        </member>
+        <member name="M:YACE.Debugger.GetRAM">
+            <summary>
+            Gets a reference to the current main memory (RAM) of the emulator.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YACE.Debugger.GetROM">
+            <summary>
+            Gets a reference to the currently loaded ROM.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YACE.Debugger.GetROMBaseAddress">
+            <summary>
+            Gets the start address of memory where ROMs are loaded.
+            </summary>
+            <returns></returns>
+        </member>
         <member name="T:YACE.Emulator">
             <summary>
             Main class responsible for emulation
@@ -179,6 +255,39 @@
             <summary>
             Resets the state of the machine.
             </summary>
+        </member>
+        <member name="P:YACE.Graphics.FrameBuffer">
+            <summary>
+            The current emulator framebuffer. Each element refers to a single pixel on the screen. Values can be 1 or 0.
+            </summary>
+        </member>
+        <member name="E:YACE.Graphics.ScreenRefresh">
+            <summary>
+            Raised when the frame buffer is drawn to.
+            </summary>
+        </member>
+        <member name="M:YACE.Graphics.Reset">
+            <summary>
+            Resets the state of the object.
+            </summary>
+        </member>
+        <member name="M:YACE.Graphics.ClearDisplay">
+            <summary>
+            Resets all pixels to 0.
+            </summary>
+        </member>
+        <member name="M:YACE.Graphics.DrawSprite(System.Byte,System.Byte,System.Byte,System.UInt16)">
+            <summary>
+            Draws a sprite to the frame buffer. 
+            </summary>
+            <param name="StartX">The X position to draw the sprite</param>
+            <param name="StartY">The Y position to draw the sprite</param>
+            <param name="Height">How many rows of bytes to draw.</param>
+            <param name="IAddress">The memory location to load sprite data from.</param>
+            <remarks>Sprites are represented by bytes starting at IAddress. All sprites are 8 pixels wide.
+            Each byte represents a row of pixels, each bit represents a single pixel. The height parameter represents how many bytes will be read.
+            A bit value of 1 instructs to flip the target pixel state. A bit value of 0 does nothing to the target pixel.</remarks>
+            <returns>Indicates whether a bit was set from 0 to 1. Often used for collision detection.</returns>
         </member>
     </members>
 </doc>

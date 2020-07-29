@@ -10,8 +10,14 @@ namespace YACE
         private const int FRAME_WIDTH = 64;
         private const int FRAME_HEIGHT = 32;
 
+        /// <summary>
+        /// The current emulator framebuffer. Each element refers to a single pixel on the screen. Values can be 1 or 0.
+        /// </summary>
         public byte[,] FrameBuffer { get; private set; }
 
+        /// <summary>
+        /// Raised when the frame buffer is drawn to.
+        /// </summary>
         public event Action ScreenRefresh;
 
         private Memory _memory;
@@ -23,11 +29,17 @@ namespace YACE
             FrameBuffer = new byte[64, 32];
         }
 
+        /// <summary>
+        /// Resets the state of the object.
+        /// </summary>
         public void Reset()
         {
             ClearDisplay();
         }
 
+        /// <summary>
+        /// Resets all pixels to 0.
+        /// </summary>
         public void ClearDisplay()
         {
             for(int y = 0;y<FrameBuffer.GetUpperBound(1) + 1; y++)
@@ -40,6 +52,17 @@ namespace YACE
             ScreenRefresh?.Invoke();
         }
 
+        /// <summary>
+        /// Draws a sprite to the frame buffer. 
+        /// </summary>
+        /// <param name="StartX">The X position to draw the sprite</param>
+        /// <param name="StartY">The Y position to draw the sprite</param>
+        /// <param name="Height">How many rows of bytes to draw.</param>
+        /// <param name="IAddress">The memory location to load sprite data from.</param>
+        /// <remarks>Sprites are represented by bytes starting at IAddress. All sprites are 8 pixels wide.
+        /// Each byte represents a row of pixels, each bit represents a single pixel. The height parameter represents how many bytes will be read.
+        /// A bit value of 1 instructs to flip the target pixel state. A bit value of 0 does nothing to the target pixel.</remarks>
+        /// <returns>Indicates whether a bit was set from 0 to 1. Often used for collision detection.</returns>
         public bool DrawSprite(byte StartX, byte StartY, byte Height, ushort IAddress)
         {
             bool returnValue = false;
