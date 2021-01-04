@@ -12,16 +12,14 @@ A CHIP-8 emulator written in C#. The system is a .NET Standard 2.0 class library
 * Disassembler window
 * Memory viewer
 
-## Installation
+## Usage
 A Windows Forms frontend is the current default for the project.
 
-The installation process is as follows:
-1. Clone the repository using Visual Studio 2019
-2. Build
-3. Run
+### Prerequisites
+* Latest version of Visual Studio 2019
+* .NET Core 3.1 or higher
 
 ### Manual Installation
-YACE can be built manually using the following process:
 
 **Clone the repository**
 
@@ -37,3 +35,7 @@ YACE can be built manually using the following process:
 
 ## Running
 A collection of public domain Chip-8 ROMs can be found [here](https://www.zophar.net/pdroms/chip8/chip-8-games-pack.html).
+
+## License
+Distributed under the MIT license. See `LICENSE` for more information
+
